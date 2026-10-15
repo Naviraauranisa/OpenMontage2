@@ -1,0 +1,718 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#F5F7FA" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0B1120" media="(prefers-color-scheme: dark)">
+<title>Storyboard Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+[hidden]{display:none!important}
+/* Wizard 4 langkah: stepper lengket di atas, isian dikelompokkan dalam kartu, scene tampil seperti shot list + area video. */
+:root{
+  --bg:#F5F7FA; --surface:#FFFFFF; --sunk:#F1F4F8; --fg:#0F172A; --muted:#64748B; --line:#E3E8EF; --line-strong:#CBD5E1;
+  --accent:#059669; --accent-hover:#047857; --accent-ink:#FFFFFF; --accent-soft:#E7F8F1; --accent-text:#047857;
+  --warn:#B45309; --warn-soft:#FEF6E7;
+  --hook:#E11D48; --hook-soft:#FFE4EA; --fore:#7C3AED; --fore-soft:#F0E9FF; --isi:#2563EB; --isi-soft:#E6EEFF; --cta:#059669; --cta-soft:#E7F8F1;
+  --shadow-sm:0 1px 2px rgba(15,23,42,.05);
+  --shadow:0 1px 2px rgba(15,23,42,.04),0 12px 32px -16px rgba(15,23,42,.18);
+  --body:"Plus Jakarta Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+  --r-lg:18px; --r:12px; --r-sm:10px;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0B1120; --surface:#111827; --sunk:#1A2335; --fg:#F1F5F9; --muted:#94A3B8; --line:#1F2A3D; --line-strong:#334155;
+  --accent:#34D399; --accent-hover:#6EE7B7; --accent-ink:#052E1C; --accent-soft:#0F2E25; --accent-text:#6EE7B7;
+  --warn:#FBBF24; --warn-soft:#2B2110;
+  --hook:#FB7185; --hook-soft:#3A1520; --fore:#A78BFA; --fore-soft:#251C3D; --isi:#60A5FA; --isi-soft:#142640; --cta:#34D399; --cta-soft:#0F2E25;
+  --shadow-sm:0 1px 2px rgba(0,0,0,.3); --shadow:0 1px 2px rgba(0,0,0,.3),0 12px 32px -16px rgba(0,0,0,.6);
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0B1120; --surface:#111827; --sunk:#1A2335; --fg:#F1F5F9; --muted:#94A3B8; --line:#1F2A3D; --line-strong:#334155;
+  --accent:#34D399; --accent-hover:#6EE7B7; --accent-ink:#052E1C; --accent-soft:#0F2E25; --accent-text:#6EE7B7;
+  --warn:#FBBF24; --warn-soft:#2B2110;
+  --hook:#FB7185; --hook-soft:#3A1520; --fore:#A78BFA; --fore-soft:#251C3D; --isi:#60A5FA; --isi-soft:#142640; --cta:#34D399; --cta-soft:#0F2E25;
+  --shadow-sm:0 1px 2px rgba(0,0,0,.3); --shadow:0 1px 2px rgba(0,0,0,.3),0 12px 32px -16px rgba(0,0,0,.6);
+  color-scheme:dark}
+
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;min-height:100vh;color:var(--fg);font:15px/1.6 var(--body);background:var(--bg);
+  padding:env(safe-area-inset-top,0px) 16px calc(120px + env(safe-area-inset-bottom,0px))}
+.wrap{max-width:880px;margin:0 auto}
+svg{width:18px;height:18px;flex:none}
+.ic{display:inline-flex}
+
+/* Header: wordmark + tanda panel storyboard, status cukup teks kecil */
+header.top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-block:22px 16px}
+.brand{display:flex;align-items:center;gap:12px;min-width:0}
+.mark{display:block;width:30px;height:30px;flex:none;color:var(--fg)}
+.mark .on{fill:var(--accent);stroke:var(--accent)}
+.brand h1{margin:0;font-size:17px;font-weight:800;letter-spacing:-.03em;line-height:1.1}
+.brand h1 span{font-weight:400;color:var(--muted)}
+.brand p{margin:3px 0 0;font-size:12.5px;color:var(--muted);line-height:1.3}
+.mode{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:500;color:var(--muted);white-space:nowrap}
+.mode::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--line-strong)}
+.mode.on::before{background:var(--accent)}
+@media (max-width:480px){.brand p{display:none}}
+
+/* Stepper: segmen timeline; gelap = sedang dibuka, hijau = sudah terisi */
+nav.steps{position:sticky;top:0;z-index:5;margin-inline:-16px;padding:0 16px;border-bottom:1px solid var(--line);background:color-mix(in srgb,var(--bg) 90%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.steps-list{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;max-width:880px;margin:0 auto}
+.steps-list button{all:unset;cursor:pointer;display:grid;gap:2px;padding:12px 0 14px;min-width:0}
+.steps-list button::before{content:"";height:3px;border-radius:2px;background:var(--line);margin-bottom:10px;transition:background .2s}
+.steps-list button.done::before{background:var(--accent)}
+.steps-list button[aria-current="true"]::before{background:var(--fg)}
+.steps-list button:focus-visible{outline:2px solid var(--accent);outline-offset:4px;border-radius:4px}
+.st{display:flex;align-items:baseline;gap:8px;min-width:0}
+.num{font:500 11.5px/1 var(--mono);color:var(--muted)}
+.steps-list b{font-size:14px;font-weight:700;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:color .15s}
+.tick{display:none;color:var(--accent-text);align-self:center}
+.tick svg{width:13px;height:13px}
+.steps-list small{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.steps-list button:hover b,.steps-list button.done b{color:var(--fg)}
+.steps-list button.done .tick{display:inline-flex}
+.steps-list button[aria-current="true"] b,.steps-list button[aria-current="true"] .num{color:var(--fg)}
+@media (max-width:640px){
+  .steps-list{gap:8px}
+  .steps-list small,.steps-list .num,.steps-list button.done .tick{display:none}
+  .steps-list b{font-size:12.5px}
+}
+
+/* Panel & kartu */
+section.panel{padding-block:28px 8px;display:grid;gap:18px;animation:fade .25s ease}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.eyebrow{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-text)}
+.phead{display:grid;gap:6px}
+h2{margin:0;font-size:clamp(22px,4vw,28px);font-weight:800;letter-spacing:-.025em;line-height:1.2;text-wrap:balance}
+.lede{margin:0;color:var(--muted);max-width:62ch}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:20px;display:grid;gap:16px;box-shadow:var(--shadow-sm);min-width:0}
+.card-title{display:flex;align-items:center;gap:10px;font-size:15px;font-weight:700;margin:0}
+.card-title .ic{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent-text)}
+.card-title .ic svg{width:16px;height:16px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media (max-width:560px){.grid2{grid-template-columns:1fr}.card{padding:16px}}
+
+/* Form */
+label.f{display:grid;gap:7px;min-width:0}
+label.f>span{font-size:13.5px;font-weight:600}
+.hint{font-size:12.5px;color:var(--muted);font-weight:400}
+.req{color:var(--accent-text);font-weight:700}
+input,select,textarea{font:inherit;font-size:15px;color:var(--fg);background:var(--surface);border:1px solid var(--line-strong);border-radius:var(--r-sm);padding:11px 14px;width:100%;transition:border-color .15s,box-shadow .15s}
+input::placeholder,textarea::placeholder{color:var(--muted);opacity:.75}
+select.unpicked{color:color-mix(in srgb,var(--muted) 75%,transparent)}
+select option{color:var(--fg)}
+input:hover,select:hover,textarea:hover{border-color:var(--muted)}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 4px var(--accent-soft)}
+textarea{resize:vertical;min-height:88px;line-height:1.6}
+select{appearance:none;-webkit-appearance:none;padding-right:40px;cursor:pointer;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2394A3B8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 12px center;background-size:18px}
+
+/* Tombol */
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font:600 14px/1.2 var(--body);border:1px solid var(--line-strong);background:var(--surface);color:var(--fg);border-radius:var(--r-sm);padding:11px 16px;cursor:pointer;text-decoration:none;box-shadow:var(--shadow-sm);transition:background .15s,border-color .15s,transform .1s,box-shadow .15s;white-space:nowrap}
+.btn:hover{background:var(--sunk)}
+.btn:active{transform:translateY(1px)}
+.btn svg{width:16px;height:16px}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:transparent;box-shadow:0 8px 18px -8px color-mix(in srgb,var(--accent) 70%,transparent)}
+.btn.primary:hover{background:var(--accent-hover)}
+.btn.ghost{background:transparent;border-color:transparent;box-shadow:none;color:var(--muted)}
+.btn.ghost:hover{background:var(--sunk);color:var(--fg)}
+.btn.soft{background:var(--accent-soft);color:var(--accent-text);border-color:transparent;box-shadow:none}
+.btn.soft:hover{filter:brightness(.97)}
+.btn.sm{padding:8px 12px;font-size:13px;border-radius:9px}
+.btn.lg{padding:14px 20px;font-size:15px}
+.btn.block{width:100%}
+.btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.navrow{display:flex;justify-content:space-between;align-items:center;gap:10px;padding-top:4px}
+.navrow .spacer{flex:1}
+
+/* Ide */
+.ideas{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
+.idea{all:unset;box-sizing:border-box;cursor:pointer;display:grid;gap:6px;padding:16px;border:1px solid var(--line);border-radius:var(--r);background:var(--surface);box-shadow:var(--shadow-sm);position:relative;transition:border-color .15s,transform .15s,box-shadow .15s}
+.idea:hover{border-color:var(--accent);transform:translateY(-2px);box-shadow:var(--shadow)}
+.idea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.idea strong{font-weight:700;padding-right:26px;line-height:1.35}
+.idea span{color:var(--muted);font-size:13.5px}
+.idea .chk{position:absolute;top:14px;right:14px;width:22px;height:22px;border-radius:50%;border:1.5px solid var(--line-strong);display:grid;place-items:center;color:transparent}
+.idea .chk svg{width:13px;height:13px}
+.idea.sel{border-color:var(--accent);background:var(--accent-soft)}
+.idea.sel .chk{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+
+/* Script */
+.aibar{background:linear-gradient(135deg,var(--accent-soft),color-mix(in srgb,var(--isi-soft) 70%,var(--accent-soft)));border:1px solid color-mix(in srgb,var(--accent) 22%,transparent);border-radius:var(--r-lg);padding:18px 20px;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
+.aibar strong{display:block;font-size:15px}
+.aibar p{margin:2px 0 0;font-size:13px;color:var(--muted)}
+.part{gap:10px}
+.part header{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.part header .hint{flex:1;min-width:140px}
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:5px 10px;border-radius:999px;color:var(--c);background:var(--cs)}
+.c-hook{--c:var(--hook);--cs:var(--hook-soft)}
+.c-fore{--c:var(--fore);--cs:var(--fore-soft)}
+.c-isi{--c:var(--isi);--cs:var(--isi-soft)}
+.c-cta{--c:var(--cta);--cs:var(--cta-soft)}
+.part textarea{border-left:3px solid var(--c)}
+
+/* Catatan & badge */
+.note{display:flex;gap:10px;align-items:flex-start;font-size:13.5px;color:var(--muted);background:var(--sunk);border-radius:var(--r);padding:12px 14px;margin:0}
+.note svg{margin-top:2px;width:16px;height:16px}
+.note.warn{color:var(--warn);background:var(--warn-soft)}
+.badge{display:inline-flex;align-items:center;font-size:11.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:4px 9px;border-radius:999px;background:var(--warn-soft);color:var(--warn)}
+
+/* Storyboard: ringkasan */
+.empty{display:grid;justify-items:center;text-align:center;gap:8px;padding:40px 20px;border:1.5px dashed var(--line-strong);border-radius:var(--r-lg);color:var(--muted)}
+.empty .ic{width:52px;height:52px;border-radius:16px;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent-text);margin-bottom:6px}
+.empty .ic svg{width:24px;height:24px}
+.empty strong{color:var(--fg);font-size:16px}
+.empty p{margin:0;max-width:44ch;font-size:14px}
+.board{display:grid;gap:16px}
+.bhead{gap:14px}
+.bhead h3{margin:0;font-size:20px;font-weight:800;letter-spacing:-.02em;line-height:1.3}
+.meta{display:flex;flex-wrap:wrap;gap:8px}
+.meta>span{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;color:var(--muted);background:var(--sunk);padding:5px 10px;border-radius:999px}
+.meta svg{width:14px;height:14px}
+details.menu{position:relative}
+details.menu>summary{list-style:none}
+details.menu>summary::-webkit-details-marker{display:none}
+.menu-list{position:absolute;right:0;top:calc(100% + 6px);z-index:4;min-width:230px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:6px;display:grid}
+.menu-list .btn{justify-content:flex-start;width:100%}
+@media (max-width:560px){.menu-list{right:auto;left:0}}
+details.bible{background:var(--sunk);border-radius:var(--r);padding:12px 16px}
+details.bible summary{cursor:pointer;font-size:13.5px;font-weight:700;display:flex;align-items:center;gap:8px}
+details.bible p{margin:10px 0 2px;font:12.5px/1.65 var(--mono);color:var(--muted)}
+
+/* Kartu scene */
+.scene{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--shadow-sm);overflow:hidden;min-width:0}
+.shead{display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.sno{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:var(--fg);color:var(--bg);font-weight:800;font-size:14px}
+.time{display:inline-flex;align-items:center;gap:6px;margin-left:auto;font:500 12.5px/1 var(--mono);color:var(--muted)}
+.time svg{width:14px;height:14px}
+.sgrid{display:grid;grid-template-columns:minmax(0,1fr) 210px;gap:20px;padding:18px}
+.scene.wide .sgrid{grid-template-columns:minmax(0,1fr)}
+@media (max-width:680px){.sgrid{grid-template-columns:minmax(0,1fr)}}
+.sinfo{display:grid;gap:12px;align-content:start;min-width:0}
+.visual{margin:0;font-size:15.5px;font-weight:600;line-height:1.5}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips>span{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--muted);background:var(--sunk);padding:4px 10px;border-radius:8px}
+.chips svg{width:14px;height:14px}
+.sblock{display:grid;gap:4px;padding:10px 14px;border-radius:var(--r-sm);background:var(--sunk)}
+.sblock small{display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.sblock small svg{width:14px;height:14px}
+.sblock p{margin:0;font-size:14.5px}
+.sblock.vo{background:var(--accent-soft);border-left:3px solid var(--accent)}
+.sblock.vo p{font-weight:500}
+.sblock.ost p{font-weight:700}
+.audio{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);margin:0}
+.audio svg{width:15px;height:15px}
+details.prompt{border:1px solid var(--line);border-radius:var(--r-sm)}
+details.prompt summary{cursor:pointer;padding:10px 14px;font-size:13.5px;font-weight:600;color:var(--muted);display:flex;align-items:center;gap:8px;list-style:none}
+details.prompt summary::-webkit-details-marker{display:none}
+details.prompt summary .chev{margin-left:auto;transition:transform .2s}
+details.prompt[open] summary .chev{transform:rotate(180deg)}
+details.prompt .pbody{padding:0 14px 14px;display:grid;gap:10px}
+details.prompt pre{margin:0;white-space:pre-wrap;word-break:break-word;font:12.5px/1.65 var(--mono);background:var(--sunk);border-radius:8px;padding:12px}
+
+/* Area video */
+.vbox{display:grid;gap:10px;align-content:start}
+.vframe{aspect-ratio:var(--ar,9/16);width:100%;border-radius:14px;border:1.5px dashed var(--line-strong);background:var(--sunk);display:grid;place-items:center;align-content:center;gap:10px;padding:16px;text-align:center;color:var(--muted);font-size:13px;overflow:hidden}
+.scene.wide .vframe{max-height:420px}
+.vframe .ic{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:var(--surface);color:var(--accent-text);box-shadow:var(--shadow-sm)}
+.vframe.err{border-color:color-mix(in srgb,var(--warn) 40%,transparent);background:var(--warn-soft);color:var(--warn)}
+.vframe.busy{border-style:solid;border-color:color-mix(in srgb,var(--accent) 35%,transparent);background:linear-gradient(110deg,var(--sunk) 30%,var(--accent-soft) 50%,var(--sunk) 70%);background-size:250% 100%;animation:shimmer 1.8s linear infinite}
+@keyframes shimmer{to{background-position:-150% 0}}
+.vbox video{aspect-ratio:var(--ar,9/16);width:100%;border-radius:14px;background:#000;display:block;object-fit:contain}
+.vbox .row{gap:8px}
+.vbox .row .btn{flex:1}
+/* Status AI & toast */
+.status{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));z-index:9;display:flex;align-items:center;gap:12px;padding:10px 10px 10px 18px;border-radius:999px;background:var(--fg);color:var(--bg);box-shadow:0 16px 40px -12px rgba(0,0,0,.45);font-size:14px;font-weight:600;max-width:calc(100vw - 32px)}
+.status .btn{background:transparent;color:var(--bg);border-color:color-mix(in srgb,var(--bg) 35%,transparent);box-shadow:none}
+.status .btn:hover{background:color-mix(in srgb,var(--bg) 12%,transparent)}
+.spin{width:16px;height:16px;border-radius:50%;border:2px solid currentColor;border-right-color:transparent;animation:spin .7s linear infinite;flex:none}
+@keyframes spin{to{transform:rotate(360deg)}}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));z-index:10;display:flex;align-items:center;gap:10px;background:var(--surface);color:var(--fg);border:1px solid var(--line);padding:11px 16px;border-radius:12px;font-size:14px;font-weight:500;box-shadow:var(--shadow);max-width:calc(100vw - 32px);animation:fade .2s ease}
+.toast::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--accent);flex:none}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition:none!important}}
+/* --- OpenMontage: render lokal --- */
+.mark .on{fill:var(--accent);stroke:var(--accent)}
+.render{display:grid;grid-template-columns:minmax(0,1fr) 240px;gap:20px;align-items:start}
+.render.wide{grid-template-columns:minmax(0,1fr)}
+@media (max-width:680px){.render{grid-template-columns:minmax(0,1fr)}}
+.render .opts{display:grid;gap:14px;align-content:start;min-width:0}
+.render .vbox{max-width:100%}
+.render.wide .vframe,.render.wide video{max-height:420px}
+.bar{height:6px;border-radius:3px;background:var(--line);overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:var(--accent);transition:width .4s}
+.check{display:flex;align-items:center;gap:10px;font-size:14px;font-weight:600;cursor:pointer}
+.check input{width:18px;height:18px;accent-color:var(--accent);padding:0}
+input[type=color]{height:46px;padding:4px;cursor:pointer}
+.scene .sinfo label.f>span{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.scene textarea{min-height:64px}
+.scene .vo textarea{border-left:3px solid var(--accent)}
+.scene .sgrid{grid-template-columns:minmax(0,1fr)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <svg class="mark" viewBox="0 0 30 30" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="1" y="1" width="12" height="12" rx="2.5"/><rect class="on" x="17" y="1" width="12" height="12" rx="2.5"/><rect x="1" y="17" width="12" height="12" rx="2.5"/><rect x="17" y="17" width="12" height="12" rx="2.5"/></svg>
+      <div><h1>Storyboard <span>Studio</span></h1><p>Dari ide jadi video · OpenMontage lokal</p></div>
+    </div>
+    <div class="row"><span class="mode" id="mode" role="status">Menghubungkan…</span><button class="btn ghost sm" id="btnReset">Mulai baru</button></div>
+  </header>
+</div>
+
+<nav class="steps" aria-label="Langkah">
+  <div class="steps-list">
+    <button data-step="profil"><span class="st"><span class="num">01</span><b>Profil</b><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span></span><small>Kenali akunmu</small></button>
+    <button data-step="ide"><span class="st"><span class="num">02</span><b>Ide</b><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span></span><small>Tentukan topik</small></button>
+    <button data-step="script"><span class="st"><span class="num">03</span><b>Script</b><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span></span><small>Tulis naskah</small></button>
+    <button data-step="storyboard"><span class="st"><span class="num">04</span><b>Storyboard</b><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span></span><small>Scene &amp; video</small></button>
+  </div>
+</nav>
+
+<main class="wrap">
+  <!-- 01 PROFIL -->
+  <section class="panel" data-panel="profil">
+    <div class="phead">
+      <span class="eyebrow">Langkah 1 dari 4</span>
+      <h2>Kenalan dulu dengan akunmu</h2>
+      <p class="lede">Isi sekali saja. AI memakai profil ini supaya gaya bahasa dan idenya cocok dengan audiens kamu.</p>
+    </div>
+    <div class="card">
+      <p class="card-title"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg></span>Tentang kamu</p>
+      <label class="f"><span>Niche &amp; siapa kamu <span class="req">*</span></span><textarea id="p_niche" rows="3" placeholder="Contoh: Ibu rumah tangga, konten parenting islami untuk anak usia 2–5 tahun"></textarea><small class="hint">Paling penting. Makin spesifik, makin pas hasil AI-nya.</small></label>
+      <div class="grid2">
+        <label class="f"><span>Platform</span><select id="p_platform"><option value="">Pilih…</option><option>Instagram Reels</option><option>TikTok</option><option>YouTube Shorts</option><option>Facebook Reels</option></select></label>
+        <label class="f"><span>Jumlah followers</span><select id="p_followers"><option value="">Pilih…</option><option>&lt;500</option><option>500–2000</option><option>2000–10k</option><option>&gt;10k</option></select></label>
+        <label class="f"><span>Frekuensi posting</span><select id="p_freq"><option value="">Pilih…</option><option>1–2x seminggu</option><option>3–5x seminggu</option><option>Setiap hari</option></select></label>
+        <label class="f"><span>Gaya bicara</span><select id="p_tone"><option value="">Pilih…</option><option>Santai &amp; hangat</option><option>Edukatif &amp; jelas</option><option>Lucu &amp; energik</option><option>Profesional</option></select></label>
+      </div>
+    </div>
+    <div class="card">
+      <p class="card-title"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></svg></span>Audiens &amp; tujuan</p>
+      <label class="f"><span>Target audiens</span><input id="p_audience" placeholder="Contoh: Ibu muda 25–35 tahun"></label>
+      <label class="f"><span>Tujuan akun / brand</span><textarea id="p_goal" rows="2" placeholder="Contoh: Membangun kepercayaan lalu jualan produk edukasi anak"></textarea></label>
+      <label class="f"><span>Produk / jasa yang bisa dijual</span><input id="p_product" placeholder="Contoh: Flashcard hijaiyah, e-book aktivitas anak"></label>
+    </div>
+    <div class="navrow"><span class="spacer"></span><button class="btn primary lg" data-go="ide">Lanjut ke Ide <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button></div>
+  </section>
+
+  <!-- 02 IDE -->
+  <section class="panel" data-panel="ide" hidden>
+    <div class="phead">
+      <span class="eyebrow">Langkah 2 dari 4</span>
+      <h2>Mau bikin konten tentang apa?</h2>
+      <p class="lede">Tulis ide kasar kamu. Belum yakin? Minta AI memberi beberapa sudut pandang, lalu pilih yang paling menarik.</p>
+    </div>
+    <div class="card">
+      <label class="f"><span>Ide yang mau dibuat <span class="req">*</span></span><textarea id="idea" rows="3" placeholder="Contoh: Saya ingin membuat iklan untuk memasarkan produk saya"></textarea></label>
+      <div class="row">
+        <button class="btn soft" id="btnIdeas" data-ai><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8z"/></svg>Cari 6 sudut pandang</button>
+        <span class="hint">Klik salah satu kartu untuk memakainya sebagai ide.</span>
+      </div>
+    </div>
+    <div class="ideas" id="ideas"></div>
+    <div class="navrow">
+      <button class="btn ghost" data-go="profil"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>Kembali</button>
+      <button class="btn primary lg" data-go="script">Lanjut ke Script <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+    </div>
+  </section>
+
+  <!-- 03 SCRIPT -->
+  <section class="panel" data-panel="script" hidden>
+    <div class="phead">
+      <span class="eyebrow">Langkah 3 dari 4</span>
+      <h2>Susun naskahnya</h2>
+      <p class="lede">Pakai struktur yang terbukti untuk video pendek: Hook, Foreshadow, Isi, lalu CTA. Semua kotak bisa kamu edit.</p>
+    </div>
+    <div class="aibar">
+      <div><strong>Tulis otomatis dengan AI</strong><p>Membuat keempat bagian sekaligus dari profil &amp; ide kamu.</p></div>
+      <div class="row">
+        <button class="btn" id="btnCopyScript"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>Salin</button>
+        <button class="btn primary" id="btnAllScript" data-ai><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8z"/></svg>Generate semua</button>
+      </div>
+    </div>
+    <div class="card part c-hook">
+      <header><span class="pill">Hook</span><span class="hint">0–3 detik pertama · bikin orang berhenti scroll</span><button class="btn ghost sm" data-gen="hook" data-label="Hook" data-ai>Tulis dengan AI</button></header>
+      <textarea id="s_hook" rows="2" placeholder="Kalimat pembuka yang bikin penasaran…"></textarea>
+    </div>
+    <div class="card part c-fore">
+      <header><span class="pill">Foreshadow</span><span class="hint">Janji isi video · bikin penonton bertahan</span><button class="btn ghost sm" data-gen="foreshadow" data-label="Foreshadow" data-ai>Tulis dengan AI</button></header>
+      <textarea id="s_foreshadow" rows="2" placeholder="Apa yang akan mereka dapat kalau nonton sampai habis…"></textarea>
+    </div>
+    <div class="card part c-isi">
+      <header><span class="pill">Isi</span><span class="hint">Inti pesan, tips, atau cerita</span><button class="btn ghost sm" data-gen="body" data-label="Isi" data-ai>Tulis dengan AI</button></header>
+      <textarea id="s_body" rows="7" placeholder="Isi utama video…"></textarea>
+    </div>
+    <div class="card part c-cta">
+      <header><span class="pill">CTA</span><span class="hint">Ajak penonton melakukan sesuatu</span><button class="btn ghost sm" data-gen="cta" data-label="CTA" data-ai>Tulis dengan AI</button></header>
+      <textarea id="s_cta" rows="2" placeholder="Contoh: Komen &quot;MAU&quot; nanti aku kirim link-nya"></textarea>
+    </div>
+    <div class="navrow">
+      <button class="btn ghost" data-go="ide"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>Kembali</button>
+      <button class="btn primary lg" data-go="storyboard">Lanjut ke Storyboard <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+    </div>
+  </section>
+
+  <!-- 04 STORYBOARD -->
+  <section class="panel" data-panel="storyboard" hidden>
+    <div class="phead">
+      <span class="eyebrow">Langkah 4 dari 4</span>
+      <h2>Storyboard &amp; video</h2>
+      <p class="lede">AI memecah script jadi scene. Edit narasi dan teks layarnya kalau perlu, lalu render jadi video MP4 di laptop ini, gratis.</p>
+    </div>
+    <div class="card">
+      <p class="card-title"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg></span>Pengaturan storyboard</p>
+      <div class="grid2">
+        <label class="f"><span>Durasi total</span><select id="b_dur"><option value="15">15 detik</option><option value="30" selected>30 detik</option><option value="45">45 detik</option><option value="60">60 detik</option></select></label>
+        <label class="f"><span>Rasio layar</span><select id="b_ratio"><option value="9:16">9:16 · Vertikal (Reels/TikTok)</option><option value="1:1">1:1 · Kotak</option><option value="16:9">16:9 · Horizontal</option></select></label>
+      </div>
+      <label class="f"><span>Gaya visual</span><input id="b_style" placeholder="Contoh: hangat, ceria, warna pastel"><small class="hint">Opsional. Dipakai AI untuk memilih nada teks dan warna aksen video.</small></label>
+      <button class="btn primary lg block" id="btnBoard" data-ai><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8z"/></svg>Buat storyboard</button>
+    </div>
+    <div id="boardOut"></div>
+    <div class="navrow">
+      <button class="btn ghost" data-go="script"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>Kembali ke Script</button>
+    </div>
+  </section>
+</main>
+
+<div class="status" id="status" role="status" aria-live="polite" hidden><span class="spin"></span><span id="statusText">Menulis…</span><button class="btn sm" id="btnStop">Sembunyikan</button></div>
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+<script>
+(() => {
+const KEY = "openmontage-studio-v1";
+const $ = (s, r=document) => r.querySelector(s);
+const $$ = (s, r=document) => [...r.querySelectorAll(s)];
+const STEPS = ["profil", "ide", "script", "storyboard"];
+
+// ---------- Ikon ----------
+const SVG = (d) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
+const ICON = {
+  check: SVG('<path d="M20 6 9 17l-5-5"/>'),
+  sparkle: SVG('<path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8z"/>'),
+  copy: SVG('<rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/>'),
+  download: SVG('<path d="M12 3v12M7 10l5 5 5-5M5 21h14"/>'),
+  play: SVG('<path d="M7 4.5v15l13-7.5z"/>'),
+  film: SVG('<rect x="2" y="2" width="20" height="20" rx="2.5"/><path d="M7 2v20M17 2v20M2 12h20M2 7h5M2 17h5M17 17h5M17 7h5"/>'),
+  mic: SVG('<rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v4"/>'),
+  frame: SVG('<path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/>'),
+  clock: SVG('<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>'),
+  chev: SVG('<path d="m6 9 6 6 6-6"/>'),
+  refresh: SVG('<path d="M21 12a9 9 0 1 1-2.6-6.4L21 8"/><path d="M21 3v5h-5"/>'),
+  alert: SVG('<circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/>'),
+  share: SVG('<path d="M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7M16 6l-4-4-4 4M12 2v13"/>')
+};
+const ic = name => { const s = document.createElement("span"); s.className = "ic"; s.innerHTML = ICON[name]; return s; };
+function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+function btn(cls, iconName, label, onclick) { const b = el("button", "btn " + cls); if (iconName) b.append(ic(iconName)); b.append(label); if (onclick) b.onclick = onclick; return b; }
+
+// ---------- State (localStorage) ----------
+const BLANK = {
+  step: "profil",
+  p: { niche:"", platform:"", followers:"", freq:"", tone:"", audience:"", goal:"", product:"" },
+  idea: "", ideas: [],
+  s: { hook:"", foreshadow:"", body:"", cta:"" },
+  b: { dur:"30", ratio:"9:16", style:"", title:"", scenes:[], accent:"#34D399", theme:"gelap", speed:"1", captions:true },
+  render: null
+};
+let S;
+try { S = JSON.parse(localStorage.getItem(KEY)) || null; } catch { S = null; }
+if (!S) S = structuredClone(BLANK);
+S.b = { ...BLANK.b, ...S.b };
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch {} updateStepper(); };
+
+// ---------- API ----------
+let aiReady = false, videoReady = false;
+async function initHealth() {
+  try { const h = await (await fetch("/api/health")).json(); aiReady = !!h.ai; videoReady = !!h.video; } catch { aiReady = videoReady = false; }
+  const m = $("#mode");
+  m.textContent = aiReady ? (videoReady ? "Siap · Claude + render lokal" : "Siap · tanpa render") : "Claude CLI tidak ditemukan";
+  m.classList.toggle("on", aiReady);
+  $$("[data-ai]").forEach(b => b.disabled = !aiReady);
+  $$("[data-video]").forEach(b => b.disabled = !videoReady || isRendering());
+}
+async function request(path, data) {
+  const r = await fetch(path, data === undefined ? {} : { method:"POST", headers:{ "Content-Type":"application/json" }, body: JSON.stringify(data) });
+  let body = {}; try { body = await r.json(); } catch {}
+  if (!r.ok) throw { code: body.error || "upstream_error", message: body.message };
+  return body;
+}
+const payload = (extra = {}) => ({ profile:S.p, idea:S.idea, script:S.s, settings:{ dur:S.b.dur, ratio:S.b.ratio, style:S.b.style }, ...extra });
+const api = async (task, extra) => (await request("/api/generate", payload({ task, ...extra }))).result;
+const ERR = {
+  invalid_json: "Format jawaban AI tidak terbaca. Coba klik lagi.",
+  not_configured: "Claude CLI tidak ditemukan. Pastikan ekstensi Claude Code terpasang & sudah login.",
+  timeout: "Claude terlalu lama menjawab. Coba lagi.",
+  empty_completion: "AI tidak mengembalikan jawaban. Coba lagi.",
+  busy: "Masih ada video yang sedang dirender."
+};
+const errMsg = e => (e?.message && e.code !== "invalid_json" ? e.message : null) || ERR[e?.code] || "Gagal menghubungi server. Coba lagi.";
+
+let busyAI = false;
+async function run(label, fn) {
+  if (busyAI) return;
+  busyAI = true;
+  $("#statusText").textContent = label + " (±10–40 detik)"; $("#status").hidden = false;
+  $$("[data-ai]").forEach(b => b.disabled = true);
+  try { await fn(); }
+  catch (e) { toast(errMsg(e)); }
+  finally { busyAI = false; $("#status").hidden = true; $$("[data-ai]").forEach(b => b.disabled = !aiReady); save(); }
+}
+// Request ke Claude tidak bisa dibatalkan di tengah jalan; tombol ini hanya menyembunyikan status.
+$("#btnStop").onclick = () => { $("#status").hidden = true; };
+$("#btnReset").onclick = () => {
+  if (!confirm("Kosongkan semua isian (profil, ide, script, storyboard) dan mulai dari awal?")) return;
+  S = structuredClone(BLANK); save(); location.reload();
+};
+
+// ---------- Binding form ----------
+const bind = (id, get, set) => { const e = $("#"+id); e.value = get() ?? ""; e.addEventListener("input", () => { set(e.value); save(); }); return e; };
+["niche","platform","followers","freq","tone","audience","goal","product"].forEach(k => bind("p_"+k, () => S.p[k], v => S.p[k] = v));
+bind("idea", () => S.idea, v => S.idea = v);
+["hook","foreshadow","body","cta"].forEach(k => bind("s_"+k, () => S.s[k], v => S.s[k] = v));
+[["b_dur","dur"],["b_ratio","ratio"],["b_style","style"]].forEach(([id,k]) => bind(id, () => S.b[k], v => S.b[k] = v));
+$("#b_ratio").addEventListener("change", () => renderBoard());
+$$("select").forEach(sel => { const mark = () => sel.classList.toggle("unpicked", sel.value === ""); mark(); sel.addEventListener("change", mark); });
+
+// ---------- Steps ----------
+const filled = v => String(v ?? "").trim() !== "";
+const stepDone = {
+  profil: () => filled(S.p?.niche),
+  ide: () => filled(S.idea),
+  script: () => filled(S.s?.hook) && filled(S.s?.body),
+  storyboard: () => (S.b.scenes?.length || 0) > 0
+};
+function updateStepper() {
+  $$(".steps-list button").forEach(b => {
+    const step = b.dataset.step, isCur = step === S.step;
+    b.setAttribute("aria-current", isCur);
+    b.classList.toggle("done", !isCur && stepDone[step]());
+  });
+}
+function go(step) {
+  S.step = step; save();
+  $$("[data-panel]").forEach(p => p.hidden = p.dataset.panel !== step);
+  window.scrollTo({ top: 0 });
+}
+$$(".steps-list button").forEach(b => b.onclick = () => go(b.dataset.step));
+$$("[data-go]").forEach(b => b.onclick = () => go(b.dataset.go));
+
+// ---------- Ide ----------
+const ideaText = it => `${it.judul} — ${it.angle}`;
+function renderIdeas() {
+  const box = $("#ideas"); box.replaceChildren();
+  (S.ideas || []).forEach(it => {
+    const b = el("button", "idea" + (S.idea === ideaText(it) ? " sel" : ""));
+    const chk = el("span", "chk"); chk.innerHTML = ICON.check;
+    b.append(chk, el("strong", null, it.judul), el("span", null, it.angle));
+    b.onclick = () => { S.idea = ideaText(it); $("#idea").value = S.idea; save(); renderIdeas(); toast("Ide dipilih"); };
+    box.append(b);
+  });
+}
+$("#btnIdeas").onclick = () => run("Mencari sudut pandang…", async () => {
+  const res = await api("ideas");
+  S.ideas = Array.isArray(res?.ideas) ? res.ideas.filter(x => x?.judul).slice(0, 8) : [];
+  if (!S.ideas.length) throw { code:"invalid_json" };
+  renderIdeas();
+});
+
+// ---------- Script ----------
+$$("[data-gen]").forEach(b => b.onclick = () => {
+  const k = b.dataset.gen;
+  run(`Menulis ${b.dataset.label}…`, async () => {
+    const res = await api("section", { part:k });
+    S.s[k] = $("#s_"+k).value = String(res?.text || "").trim();
+  });
+});
+$("#btnAllScript").onclick = () => run("Menulis script lengkap…", async () => {
+  const r = await api("script");
+  ["hook","foreshadow","body","cta"].forEach(k => { if (r?.[k]) { S.s[k] = String(r[k]); $("#s_"+k).value = S.s[k]; } });
+});
+const scriptText = () => `HOOK: ${S.s.hook}\nFORESHADOW: ${S.s.foreshadow}\nISI: ${S.s.body}\nCTA: ${S.s.cta}`;
+$("#btnCopyScript").onclick = () => copy(scriptText(), "Script disalin");
+
+// ---------- Storyboard ----------
+const tc = s => `${String(Math.floor(s/60)).padStart(2,"0")}:${String(Math.round(s%60)).padStart(2,"0")}`;
+const SECTION_CLASS = { HOOK:"c-hook", FORESHADOW:"c-fore", ISI:"c-isi", CTA:"c-cta" };
+$("#btnBoard").onclick = () => {
+  if (!S.s.hook && !S.s.body) { toast("Isi script dulu di langkah 3"); return; }
+  run("Menyusun storyboard…", async () => {
+    const r = await api("storyboard");
+    if (!Array.isArray(r?.scenes) || !r.scenes.length) throw { code:"invalid_json" };
+    S.b.title = String(r.title || "Storyboard");
+    if (/^#[0-9a-f]{6}$/i.test(r.accent_color || "")) S.b.accent = r.accent_color;
+    S.b.scenes = r.scenes.map((s, i) => ({ ...s, scene: i + 1, start: Number(s.start)||0, end: Number(s.end)||0 }));
+    S.render = null;
+    renderBoard();
+    $("#boardOut").scrollIntoView({ behavior:"smooth", block:"start" });
+  });
+};
+
+function field(label, value, rows, onInput, cls) {
+  const f = el("label", "f" + (cls ? " " + cls : ""));
+  const input = rows ? el("textarea") : el("input");
+  if (rows) input.rows = rows;
+  input.value = value || "";
+  input.addEventListener("input", () => { onInput(input.value); save(); });
+  f.append(el("span", null, label), input);
+  return f;
+}
+function selectField(label, value, options, onChange) {
+  const f = el("label", "f"); const s = el("select");
+  options.forEach(([v, t]) => { const o = el("option", null, t); o.value = v; s.append(o); });
+  s.value = value; s.onchange = () => { onChange(s.value); save(); };
+  f.append(el("span", null, label), s); return f;
+}
+
+function renderBoard() {
+  const out = $("#boardOut"); out.replaceChildren();
+  if (!S.b.scenes?.length) {
+    const em = el("div", "empty"); em.append(ic("film"), el("strong", null, "Belum ada storyboard"), el("p", null, "Pastikan script di langkah 3 sudah siap, atur durasi dan rasio di atas, lalu klik \"Buat storyboard\"."));
+    out.append(em); return;
+  }
+  const wrap = el("div", "board");
+
+  // Ringkasan + render
+  const head = el("div", "card bhead");
+  head.append(el("h3", null, S.b.title));
+  const total = S.b.scenes.reduce((m, s) => Math.max(m, Number(s.end) || 0), 0);
+  const meta = el("div", "meta");
+  [["film", `${S.b.scenes.length} scene`], ["clock", `±${total} detik`], ["frame", S.b.ratio || "9:16"]].forEach(([i, t]) => { const m = el("span"); m.append(ic(i), t); meta.append(m); });
+  head.append(meta);
+
+  const wide = S.b.ratio === "16:9";
+  const rend = el("div", "render" + (wide ? " wide" : ""));
+  const opts = el("div", "opts");
+  const g = el("div", "grid2");
+  g.append(
+    selectField("Tema", S.b.theme, [["gelap","Gelap"],["terang","Terang"]], v => S.b.theme = v),
+    selectField("Kecepatan suara", S.b.speed, [["0.9","Pelan"],["1","Normal"],["1.1","Cepat"],["1.2","Lebih cepat"]], v => S.b.speed = v)
+  );
+  const color = el("label", "f"); const ci = el("input"); ci.type = "color"; ci.value = S.b.accent;
+  ci.oninput = () => { S.b.accent = ci.value; save(); };
+  color.append(el("span", null, "Warna aksen"), ci);
+  const cap = el("label", "check"); const cb = el("input"); cb.type = "checkbox"; cb.checked = S.b.captions !== false;
+  cb.onchange = () => { S.b.captions = cb.checked; save(); };
+  cap.append(cb, "Subtitle otomatis dari narasi");
+  g.append(color);
+  opts.append(g, cap);
+  const actions = el("div", "row");
+  const rb = btn("primary", "play", S.render?.status === "done" ? "Render ulang" : "Render video", startRender);
+  rb.dataset.video = ""; rb.disabled = !videoReady || isRendering();
+  const menu = el("details", "menu");
+  const sum = el("summary", "btn"); sum.append(ic("share"), "Ekspor", ic("chev")); menu.append(sum);
+  const list = el("div", "menu-list");
+  const item = (iconName, label, fn) => btn("ghost sm", iconName, label, () => { menu.open = false; fn(); });
+  list.append(
+    item("mic", "Salin narasi + teks layar", () => copy(S.b.scenes.map(s => `[${tc(s.start)}] VO: ${s.voiceover}\n        TEKS: ${s.on_screen_text}`).join("\n"), "Narasi & teks disalin")),
+    item("copy", "Salin JSON", () => copy(exportJSON(), "JSON disalin")),
+    item("download", "Unduh file .json", downloadJSON)
+  );
+  menu.append(list);
+  actions.append(rb, menu);
+  opts.append(actions);
+  const note = el("p", "note");
+  note.append(ic("alert"), el("span", null, videoReady
+    ? "Render memakai Piper TTS (suara Indonesia) + Remotion di laptop ini. Gratis, ±1–3 menit untuk video 30 detik."
+    : "Render belum siap: cek Piper, model suara id_ID, ffmpeg, dan node_modules remotion-composer."));
+  opts.append(note);
+  const vb = el("div", "vbox"); vb.id = "renderBox"; vb.style.setProperty("--ar", wide ? "16/9" : S.b.ratio === "1:1" ? "1/1" : "9/16");
+  rend.append(opts, vb);
+  head.append(rend);
+  wrap.append(head);
+
+  S.b.scenes.forEach(s => {
+    const c = el("article", "scene wide");
+    const sh = el("div", "shead");
+    const sec = String(s.section || "").toUpperCase();
+    const time = el("span", "time"); time.append(ic("clock"), `${tc(s.start)}–${tc(s.end)} · ${Math.max(0, s.end - s.start)} dtk`);
+    sh.append(el("span", "sno", String(s.scene)), el("span", "pill " + (SECTION_CLASS[sec] || "c-isi"), sec || "SCENE"), time);
+    const grid = el("div", "sgrid");
+    const info = el("div", "sinfo");
+    if (s.visual) info.append(el("p", "visual", s.visual));
+    info.append(
+      field("Narasi (dibacakan)", s.voiceover, 3, v => s.voiceover = v, "vo"),
+      field("Teks di layar (maks ±6 kata)", s.on_screen_text, 0, v => s.on_screen_text = v)
+    );
+    grid.append(info); c.append(sh, grid); wrap.append(c);
+  });
+  out.append(wrap);
+  renderVideo();
+}
+
+// ---------- Render video (OpenMontage lokal) ----------
+const isRendering = () => ["queued", "running"].includes(S.render?.status);
+function renderVideo() {
+  const box = $("#renderBox"); if (!box) return;
+  box.replaceChildren();
+  const r = S.render || {};
+  if (r.status === "done" && r.url) {
+    const vid = el("video"); vid.src = r.url + "?t=" + (r.t || ""); vid.controls = true; vid.playsInline = true; vid.preload = "metadata";
+    const row = el("div", "row");
+    const dl = el("a", "btn sm"); dl.append(ic("download"), "Unduh MP4"); dl.href = r.url + "?download=1"; dl.download = "";
+    row.append(dl);
+    box.append(vid, row); return;
+  }
+  if (isRendering()) {
+    const f = el("div", "vframe busy");
+    const bar = el("div", "bar"); bar.style.width = "80%"; const fill = el("i"); fill.style.width = Math.round((r.progress || 0) * 100) + "%"; bar.append(fill);
+    f.append(el("span", "spin"), el("span", null, r.stage || "Menyiapkan…"), bar);
+    box.append(f); return;
+  }
+  const f = el("div", "vframe" + (r.status === "error" ? " err" : ""));
+  if (r.status === "error") f.append(ic("alert"), el("span", null, String(r.error || "Render gagal").slice(0, 300)));
+  else f.append(ic("play"), el("span", null, "Video hasil render akan muncul di sini"));
+  box.append(f);
+}
+const scenesPayload = () => S.b.scenes.map(s => ({ scene:s.scene, start:s.start, end:s.end, section:s.section, voiceover:s.voiceover || "", on_screen_text:s.on_screen_text || "" }));
+async function startRender() {
+  if (!S.b.scenes?.length) return;
+  S.render = { status:"queued", stage:"Menyiapkan…", progress:0 }; save(); renderBoard();
+  try {
+    const r = await request("/api/render", { title:S.b.title, ratio:S.b.ratio, theme:S.b.theme, accent:S.b.accent, speed:Number(S.b.speed), captions:S.b.captions !== false, scenes:scenesPayload() });
+    S.render = r;
+  } catch (e) {
+    S.render = { status:"error", error: errMsg(e) };
+  }
+  save(); renderBoard(); pollRender();
+}
+let pollTimer = null;
+async function pollRender() {
+  clearTimeout(pollTimer);
+  if (!S.render?.id || !isRendering()) return;
+  try {
+    const r = await request(`/api/render/${encodeURIComponent(S.render.id)}`);
+    S.render = { ...r, t: r.status === "done" ? Date.now() : undefined };
+  } catch { /* server sibuk sebentar, coba lagi */ }
+  save();
+  if (isRendering()) { renderVideo(); pollTimer = setTimeout(pollRender, 1500); }
+  else { renderBoard(); if (S.render?.status === "done") toast("Video selesai dirender"); }
+}
+
+const exportJSON = () => JSON.stringify({ title:S.b.title, ratio:S.b.ratio, duration:Number(S.b.dur), script:S.s, scenes:S.b.scenes }, null, 2);
+function downloadJSON() {
+  const name = (S.b.title || "storyboard").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") + ".json";
+  const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([exportJSON()], { type:"application/json" })); a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+
+// ---------- Utils ----------
+let tt;
+function toast(msg) { const t = $("#toast"); t.textContent = msg; t.hidden = false; clearTimeout(tt); tt = setTimeout(() => t.hidden = true, 3200); }
+function copy(text, msg) { navigator.clipboard?.writeText(text).then(() => toast(msg), () => toast("Gagal menyalin")) ?? toast("Gagal menyalin"); }
+document.addEventListener("click", e => $$("details.menu[open]").forEach(m => { if (!m.contains(e.target)) m.open = false; }));
+
+renderIdeas(); renderBoard(); go(STEPS.includes(S.step) ? S.step : "profil");
+initHealth().then(() => { renderBoard(); pollRender(); });
+})();
+</script>
+</body>
+</html>
